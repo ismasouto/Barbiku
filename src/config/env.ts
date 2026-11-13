@@ -2,6 +2,9 @@
 
 export const env = {
   revenueCatApiKey: process.env.EXPO_PUBLIC_REVENUECAT_API_KEY ?? '',
+  /** Opcionales: claves nativas (appl_/goog_) para dev builds. Sin ellas se usa REST. */
+  revenueCatIosKey: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ?? '',
+  revenueCatAndroidKey: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY ?? '',
   rcWebPurchaseLink: process.env.EXPO_PUBLIC_RC_WEB_PURCHASE_LINK ?? '',
   supabaseUrl: process.env.EXPO_PUBLIC_SUPABASE_URL ?? '',
   supabaseAnonKey: process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY ?? '',

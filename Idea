@@ -1,0 +1,10 @@
+1-App "Barbiku" (Expo) con el SDK de RevenueCat
+2-RevenueCat, configurado desde el dashboard sin código:
+	-Producto de compra única 'Refloresta'(20€ + la proporción que se lleve Stripe para que sean 20€ para Refloresta)
+	-Entitlement 'Refloresta' asociado a ese producto.
+	-Paywall diseñado con su editor(incluso con el editor de IA), sin programarlo: foto de un bosque y la lista de ventajas (collar con diseño o ch	apa para el collar)
+	
+3-Media pieza: un webhook que guarda cada compra en una tabla(Supabase o Firebase). Es lo que Refloresta usa para saber qué árboles plantar y con qué nombre.
+
+
+

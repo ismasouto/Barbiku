@@ -2,7 +2,8 @@
 //
 // RevenueCat envía: POST { api_version, event: { id, type, app_user_id,
 //   original_app_user_id, aliases, product_id, entitlement_ids, transaction_id, ... } }
-// con la cabecera Authorization configurada en el dashboard (= secret RC_WEBHOOK_AUTH).
+// con la cabecera Authorization con el valor LITERAL configurado en el dashboard
+// (sin prefijo "Bearer" añadido); se compara exacta con el secret RC_WEBHOOK_AUTH.
 //
 // Siempre respondemos 200 cuando el evento se procesa o se descarta a propósito,
 // para que RevenueCat no reintente sin fin. 401 si la cabecera no coincide;
@@ -12,9 +13,13 @@ import { adminClient, json, safeEqual } from '../_shared/common.ts';
 const PRODUCT_ID = 'refloresta';
 const ENTITLEMENT_ID = 'refloresta';
 
-// Tipos de evento (a confirmar con la documentación oficial de RevenueCat).
+// Tipos de evento (verificados con la documentación de RevenueCat):
+// - compra única: NON_RENEWING_PURCHASE (INITIAL_PURCHASE por si acaso).
+// - reembolso: no existe tipo REFUND; llega CANCELLATION (cancel_reason
+//   CUSTOMER_SUPPORT, precio negativo). Cualquier CANCELLATION del producto → refunded.
+// - cualquier otro tipo (incluido TEST) se guarda en webhook_events y se responde 200.
 const PURCHASE_TYPES = new Set(['NON_RENEWING_PURCHASE', 'INITIAL_PURCHASE']);
-const REFUND_TYPES = new Set(['CANCELLATION', 'REFUND']);
+const REFUND_TYPES = new Set(['CANCELLATION']);
 
 interface RCEvent {
   id?: string;

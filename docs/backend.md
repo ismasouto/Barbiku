@@ -35,12 +35,12 @@ Requisitos: CLI de Supabase (`npx supabase@latest …` sirve, no hace falta inst
    npx supabase db push
    ```
    (Alternativa sin CLI: pegar `supabase/migrations/001_init.sql` en el SQL Editor y ejecutarlo.)
-3. **Secrets de las funciones** (`SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` los inyecta Supabase automáticamente en producción):
+3. **Secrets de las funciones.** `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY` se inyectan solas en las Edge Functions; los **únicos** secrets manuales son estos dos:
    ```bash
-   npx supabase secrets set RC_WEBHOOK_AUTH="Bearer <cadena-aleatoria-larga>" ADMIN_PASSCODE="<código-del-panel>"
+   npx supabase secrets set RC_WEBHOOK_AUTH="<cadena-aleatoria-larga>" ADMIN_PASSCODE="<código-del-panel>"
    ```
-   Genera la cadena con `openssl rand -hex 32`.
-4. **Desplegar funciones:**
+   Genera la cadena con `openssl rand -hex 32`. RevenueCat envía en `Authorization` el valor **literal** que pongas en su dashboard (no añade "Bearer"), y la función lo compara exacto con `RC_WEBHOOK_AUTH`.
+4. **Desplegar funciones** (`--no-verify-jwt` es obligatorio: RevenueCat no manda un JWT de Supabase y, sin él, el gateway responde 401 antes de llegar al código; `supabase/config.toml` ya lo fija con `verify_jwt = false`):
    ```bash
    npx supabase functions deploy revenuecat-webhook --no-verify-jwt
    npx supabase functions deploy admin-orders --no-verify-jwt
@@ -48,9 +48,9 @@ Requisitos: CLI de Supabase (`npx supabase@latest …` sirve, no hace falta inst
    ```
 5. **Webhook en RevenueCat** (Project settings → Integrations → Webhooks → *Add new configuration*):
    - URL: `https://<PROJECT_REF>.supabase.co/functions/v1/revenuecat-webhook`
-   - *Authorization header value*: exactamente el mismo valor que `RC_WEBHOOK_AUTH` (p. ej. `Bearer 3f9a…`).
+   - *Authorization header value*: exactamente el mismo valor que `RC_WEBHOOK_AUTH` (literal, carácter a carácter).
    - Entorno: *Sandbox* (o ambos) para el hackathon.
-   - Botón *Send test event*: debe responder 200 (`ignored: other_product`, porque el evento `TEST` no es de `refloresta`).
+   - El evento `TEST` del dashboard no está soportado en RC Billing; para probar usa `npm run test:webhook -- purchase <appUserId>` o una compra real en modo test. Cualquier tipo desconocido se guarda en `webhook_events` y responde 200.
 6. **App** (`.env`):
    ```
    EXPO_PUBLIC_SUPABASE_URL=https://<PROJECT_REF>.supabase.co
@@ -63,10 +63,10 @@ Requisitos: CLI de Supabase (`npx supabase@latest …` sirve, no hace falta inst
 2. Inserta el evento en `webhook_events` (id del evento como PK). Si ya existe → **200** `{duplicate:true}` y nada más.
 3. Solo actúa si `product_id = 'refloresta'` o `entitlement_ids` contiene `refloresta`; si no → 200 `ignored`.
 4. `NON_RENEWING_PURCHASE` / `INITIAL_PURCHASE` → busca el pedido `pending_payment` más reciente de `app_user_id` (también `original_app_user_id` y `aliases`) y lo pasa a `paid`, `paid_at = now()`, `rc_transaction_id`. Sin pedido pendiente → log + 200.
-5. `CANCELLATION` / `REFUND` → pedido con ese `transaction_id` (o el último `paid` del usuario) a `refunded`.
+5. `CANCELLATION` (RevenueCat no tiene tipo REFUND: el reembolso llega como `CANCELLATION` con `cancel_reason = CUSTOMER_SUPPORT`) → pedido con ese `transaction_id` (o el último `paid` del usuario) a `refunded`.
 6. Errores de base de datos → 500 (RevenueCat reintenta); todo lo demás → 200.
 
-> Los tipos de evento están pendientes de confirmar contra la documentación oficial (sesión pagos-revenuecat). Están en dos `Set` al principio de `revenuecat-webhook/index.ts`.
+> Tipos verificados con la documentación oficial (sesión pagos-revenuecat). Están en dos `Set` al principio de `revenuecat-webhook/index.ts`. Si `entitlement_ids` llega `null`, se filtra por `product_id`.
 
 ## Pruebas en local (Docker)
 
@@ -77,14 +77,14 @@ npx supabase status          # URL de la API y claves anon / service_role
 
 Crea `supabase/functions/.env` (no se commitea):
 ```
-RC_WEBHOOK_AUTH=Bearer test-secret
+RC_WEBHOOK_AUTH=test-secret
 ADMIN_PASSCODE=1234
 ```
 
 ```bash
 npx supabase functions serve --env-file supabase/functions/.env
 # en otra terminal, con EXPO_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321,
-# EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon de supabase status> y RC_WEBHOOK_AUTH="Bearer test-secret"
+# EXPO_PUBLIC_SUPABASE_ANON_KEY=<anon de supabase status> y RC_WEBHOOK_AUTH="test-secret"
 npm run test:webhook
 ```
 

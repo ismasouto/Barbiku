@@ -136,7 +136,7 @@ async function suite() {
   check('anon NO puede insertar con status=paid', insPaid.status >= 400, `HTTP ${insPaid.status}`);
 
   // 2. 401
-  const bad = await sendWebhook(event('NON_RENEWING_PURCHASE', appUserId, tx), 'Bearer incorrecto');
+  const bad = await sendWebhook(event('NON_RENEWING_PURCHASE', appUserId, tx), 'incorrecto');
   check('webhook con auth incorrecta → 401', bad.status === 401, `HTTP ${bad.status}`);
 
   // 3. Compra

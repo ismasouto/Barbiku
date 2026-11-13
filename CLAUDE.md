@@ -384,3 +384,14 @@ Para pruebas locales, añade el script `scripts/send-test-webhook.ts`, que manda
 - [ ] La pantalla de oferta tiene un "Ahora no" siempre visible y no usa urgencia falsa.
 - [ ] README con instalación, variables de entorno y configuración de RevenueCat, Stripe y Supabase paso a paso.
 - [ ] `npx tsc --noEmit` sin errores.
+
+---
+
+## 16. Convenciones de Expo (SDK 58)
+
+@AGENTS.md
+
+- Las rutas de Expo Router viven en `src/app/` (no `app/`): donde §6 dice `app/…`, léase `src/app/…`. El resto del código no-ruta va en `src/`.
+- Alias de importación: `@/` → `src/`.
+- Instala paquetes con `npx expo install`.
+- Contratos entre sesiones (tipos, rutas, API): `docs/CONTRATOS.md`. Léelo antes de empezar.

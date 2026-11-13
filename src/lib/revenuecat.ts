@@ -113,7 +113,10 @@ export async function hasRefloresta(opts?: { invalidateCache?: boolean }): Promi
 /** URL del Web Purchase Link con el appUserId (formato oficial: https://pay.rev.cat/<token>/<appUserId>). */
 export function buildPurchaseUrl(appUserId: string): string {
   const base = env.rcWebPurchaseLink.replace(/\/+$/, '');
-  return `${base}/${encodeURIComponent(appUserId)}`;
+  const url = `${base}/${encodeURIComponent(appUserId)}`;
+  // Prerrellena el email en el checkout (parámetro oficial `email`).
+  const email = useUser.getState().profile.email?.trim();
+  return email ? `${url}?email=${encodeURIComponent(email)}` : url;
 }
 
 /**

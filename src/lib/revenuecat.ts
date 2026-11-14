@@ -152,5 +152,28 @@ export async function openPurchaseLink(appUserId: string, orderId?: string): Pro
     await WebBrowser.openBrowserAsync(url);
     return;
   }
-  await WebBrowser.openAuthSessionAsync(url, RETURN_URL);
+  // Si una sesión anterior quedó colgada (p. ej. en Expo Go el deep link barbiku:// no vuelve),
+  // expo-web-browser responde { type: 'locked' } al instante sin abrir nada. La cerramos y reintentamos.
+  closeLingeringBrowser();
+  let result = await WebBrowser.openAuthSessionAsync(url, RETURN_URL);
+  if (result.type === 'locked') {
+    closeLingeringBrowser();
+    await new Promise((r) => setTimeout(r, 300));
+    result = await WebBrowser.openAuthSessionAsync(url, RETURN_URL);
+    if (result.type === 'locked') throw new Error('No se ha podido abrir la página de pago.');
+  }
+}
+
+function closeLingeringBrowser(): void {
+  try {
+    WebBrowser.dismissAuthSession();
+  } catch {
+    // No hay sesión que cerrar o no está disponible en esta plataforma.
+  }
+  try {
+    // Puede devolver una promesa: capturamos también su rechazo para no dejar errores sueltos.
+    void Promise.resolve(WebBrowser.dismissBrowser()).catch(() => {});
+  } catch {
+    // Ídem.
+  }
 }

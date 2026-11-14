@@ -20,6 +20,8 @@ Todo se hace en **modo test / sandbox**.
 
 
 > **Nota (14/11/2026):** el producto real es **`refloresta_mascota`**, **consumible** de 20,56 EUR, para permitir **una compra por mascota** con el mismo usuario. Los anteriores (`refloresta`, suscripción, y `refloresta_unico`, no consumible) están archivados. Como el entitlement de RevenueCat es por usuario, la app **no** lo usa para confirmar el pago: manda el pedido en `metadata[order_id]` del Web Purchase Link, el webhook marca ese pedido como `paid` y la pantalla `procesando` y la ficha leen ese estado en Supabase.
+>
+> ⚠️ **El producto NO debe estar vinculado al entitlement `refloresta`.** Si lo está, el entitlement (que es por usuario) queda activo tras la primera compra y el Web Purchase Link da la siguiente compra de ese usuario por hecha sin cobrar: redirige a la página de éxito en unos segundos. El entitlement `refloresta` existe, pero sin productos.
 
 ## 3. Web Purchase Link
 1. En la offering `default`, ve a *Web* → **Create Web Purchase Link**.

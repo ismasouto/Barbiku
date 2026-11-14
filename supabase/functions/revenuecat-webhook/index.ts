@@ -51,8 +51,9 @@ Deno.serve(async (req) => {
   if (req.method !== 'POST') return json({ error: 'method_not_allowed' }, 405);
 
   // 1. Autorización
-  const expected = Deno.env.get('RC_WEBHOOK_AUTH');
-  const given = req.headers.get('authorization') ?? '';
+  // Tolerante a despistes al configurar: ignora espacios y un prefijo "Bearer " opcional.
+  const expected = Deno.env.get('RC_WEBHOOK_AUTH')?.trim();
+  const given = (req.headers.get('authorization') ?? '').trim().replace(/^Bearer\s+/i, '');
   if (!expected || !safeEqual(given, expected)) {
     return json({ error: 'unauthorized' }, 401);
   }

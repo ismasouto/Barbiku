@@ -3,7 +3,7 @@
 // como pagado el webhook. Nunca se muestra información sobre el estado del árbol (§9).
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ArbolAnimado } from '@/components/ArbolAnimado';
@@ -108,6 +108,21 @@ export default function ProcesandoScreen() {
     setOffline(false);
     setAttempt((n) => n + 1);
   }, []);
+  // En web el pago se abre en otra pestaña: si la espera se agotó mientras se pagaba,
+  // volvemos a comprobar automáticamente cuando el usuario regresa a esta pestaña.
+  useEffect(() => {
+    if (Platform.OS !== 'web' || phase !== 'timeout' || typeof document === 'undefined') return;
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') retry();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
+    };
+  }, [phase, retry]);
+
   const goBack = useCallback(() => {
     if (petId) router.replace({ pathname: '/mascota/[id]', params: { id: petId } });
     else router.replace('/(tabs)/home');

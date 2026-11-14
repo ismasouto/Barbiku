@@ -145,7 +145,7 @@ export default function EnvioScreen() {
               ? engravingResult.error
               : 'Se grabará en mayúsculas. Letras, números, espacios y guiones.'}
           </Text>
-          <Text style={[styles.helper, counter > MAX_ENGRAVING && styles.errorText]}>
+          <Text style={[styles.helper, styles.counter, counter > MAX_ENGRAVING && styles.errorText]}>
             {counter}/{MAX_ENGRAVING}
           </Text>
         </View>
@@ -240,6 +240,8 @@ const styles = StyleSheet.create({
   inputError: { borderColor: colors.error },
   helperRow: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm, marginTop: 4 },
   helper: { ...type.small, flexShrink: 1 },
+  // El contador no se encoge: si no, "4/12" se parte en dos líneas.
+  counter: { flexShrink: 0 },
   errorText: { color: colors.error, fontFamily: fonts.bold },
   row: { flexDirection: 'row', gap: spacing.sm + 4 },
   summary: {

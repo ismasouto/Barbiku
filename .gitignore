@@ -54,3 +54,6 @@ example
 /android
 .env
 supabase/.temp/
+
+# Capturas originales (las seleccionadas están en docs/screenshots)
+CapturasFuncionamiento/

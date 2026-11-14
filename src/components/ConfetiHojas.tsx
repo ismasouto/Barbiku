@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { StyleSheet, useWindowDimensions, View } from 'react-native';
 import Animated, {
   Easing,
@@ -32,7 +32,8 @@ export function ConfetiHojas({ count = 28 }: { count?: number }) {
   const reduceMotion = useReducedMotion();
   const { width, height } = useWindowDimensions();
 
-  const leaves = useMemo<Leaf[]>(
+  // Aleatorio una sola vez por montaje (inicializador perezoso: puro para el React Compiler).
+  const [leaves] = useState<Leaf[]>(
     () =>
       Array.from({ length: count }, (_, i) => ({
         x: Math.random(),
@@ -43,7 +44,6 @@ export function ConfetiHojas({ count = 28 }: { count?: number }) {
         drift: (Math.random() - 0.5) * 120,
         spin: (Math.random() - 0.5) * 720,
       })),
-    [count],
   );
 
   if (reduceMotion) return null;

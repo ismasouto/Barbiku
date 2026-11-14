@@ -4,18 +4,12 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, View } from 'react-native';
-import Animated, {
-  Easing,
-  useAnimatedStyle,
-  useSharedValue,
-  withDelay,
-  withRepeat,
-  withSequence,
-  withTiming,
-} from 'react-native-reanimated';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { ArbolAnimado } from '@/components/ArbolAnimado';
+import { env } from '@/config/env';
 import { hasRefloresta } from '@/lib/revenuecat';
+import { devMarkOrderPaid } from '@/lib/supabase';
 import { usePets } from '@/store/pets';
 import { useUser } from '@/store/user';
 import { colors, fonts, radius, spacing, type } from '@/theme';
@@ -81,6 +75,9 @@ export default function ProcesandoScreen() {
           if (ok) {
             if (cancelled.current) return;
             if (petId) {
+              // Solo en DEV_FAKE_PURCHASE + backend mock: simula el webhook. Con backend real lo marca el webhook.
+              const orderId = usePets.getState().getRefloresta(petId).orderId;
+              if (env.devFakePurchase && orderId) await devMarkOrderPaid(orderId);
               usePets.getState().updateRefloresta(petId, { guardian: true });
               router.replace({ pathname: '/refloresta/gracias', params: { petId } });
             } else {
@@ -119,7 +116,7 @@ export default function ProcesandoScreen() {
   return (
     <SafeAreaView style={styles.root}>
       <View style={styles.treeWrap} pointerEvents="none">
-        <GrowingTree />
+        <ArbolAnimado name={petName} size={240} />
       </View>
 
       {phase === 'checking' ? (
@@ -160,49 +157,6 @@ export default function ProcesandoScreen() {
   );
 }
 
-/** Árbol sencillo que crece en bucle (provisional hasta cablear ArbolAnimado). */
-function GrowingTree() {
-  const trunk = useSharedValue(0);
-  const crown = useSharedValue(0);
-  const sway = useSharedValue(0);
-
-  useEffect(() => {
-    const grow = { duration: 1400, easing: Easing.out(Easing.cubic) };
-    trunk.value = withRepeat(
-      withSequence(withTiming(1, grow), withDelay(1600, withTiming(1, { duration: 0 })), withTiming(0, { duration: 400 })),
-      -1,
-    );
-    crown.value = withRepeat(
-      withSequence(
-        withDelay(700, withTiming(1, { duration: 1100, easing: Easing.out(Easing.back(1.6)) })),
-        withDelay(1200, withTiming(0, { duration: 400 })),
-      ),
-      -1,
-    );
-    sway.value = withRepeat(withTiming(1, { duration: 1800, easing: Easing.inOut(Easing.sin) }), -1, true);
-  }, [trunk, crown, sway]);
-
-  const trunkStyle = useAnimatedStyle(() => ({
-    height: 20 + trunk.value * 90,
-  }));
-  const crownStyle = useAnimatedStyle(() => ({
-    opacity: crown.value,
-    transform: [{ scale: 0.2 + crown.value * 0.8 }, { rotate: `${(sway.value - 0.5) * 6}deg` }],
-  }));
-
-  return (
-    <View style={treeStyles.box}>
-      <Animated.View style={[treeStyles.crown, crownStyle]}>
-        <View style={[treeStyles.leaf, { width: 120, height: 120, left: 40, top: 0 }]} />
-        <View style={[treeStyles.leaf, treeStyles.leafLight, { width: 95, height: 95, left: 0, top: 45 }]} />
-        <View style={[treeStyles.leaf, treeStyles.leafLight, { width: 95, height: 95, left: 105, top: 45 }]} />
-      </Animated.View>
-      <Animated.View style={[treeStyles.trunk, trunkStyle]} />
-      <View style={treeStyles.ground} />
-    </View>
-  );
-}
-
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: colors.crema },
   treeWrap: { flex: 1, alignItems: 'center', justifyContent: 'flex-end', paddingBottom: spacing.lg },
@@ -219,13 +173,4 @@ const styles = StyleSheet.create({
   },
   secondary: { marginTop: spacing.sm, paddingVertical: spacing.md, alignSelf: 'stretch', alignItems: 'center' },
   secondaryText: { fontFamily: fonts.bold, fontSize: 16, color: colors.bosque },
-});
-
-const treeStyles = StyleSheet.create({
-  box: { width: 240, height: 280, alignItems: 'center', justifyContent: 'flex-end' },
-  crown: { position: 'absolute', bottom: 100, width: 200, height: 140 },
-  leaf: { position: 'absolute', borderRadius: 999, backgroundColor: colors.bosque },
-  leafLight: { backgroundColor: colors.brote },
-  trunk: { width: 18, borderTopLeftRadius: 6, borderTopRightRadius: 6, backgroundColor: colors.tierra },
-  ground: { width: 200, height: 12, borderRadius: 999, backgroundColor: colors.madera2, opacity: 0.5 },
 });

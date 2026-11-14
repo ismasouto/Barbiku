@@ -23,11 +23,8 @@ export const RETURN_URL = `${env.appScheme}://${RETURN_PATH}`;
 const FAKE_DELAY_MS = 1000;
 const RC_API = 'https://api.revenuecat.com/v1';
 
-/** Claves opcionales para development builds nativas (no forman parte de env.ts). */
-const nativeKeys = {
-  ios: process.env.EXPO_PUBLIC_REVENUECAT_IOS_API_KEY ?? '',
-  android: process.env.EXPO_PUBLIC_REVENUECAT_ANDROID_API_KEY ?? '',
-};
+/** Claves opcionales para development builds nativas. */
+const nativeKeys = { ios: env.revenueCatIosKey, android: env.revenueCatAndroidKey };
 
 function isExpoGo(): boolean {
   return Boolean((globalThis as { expo?: { modules?: { ExpoGo?: unknown } } }).expo?.modules?.ExpoGo);

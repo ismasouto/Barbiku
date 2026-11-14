@@ -45,7 +45,7 @@ function event(type: string, appUserId: string, transactionId: string) {
       app_user_id: appUserId,
       original_app_user_id: appUserId,
       aliases: [appUserId],
-      product_id: 'refloresta',
+      product_id: 'refloresta_unico',
       entitlement_ids: ['refloresta'],
       period_type: 'NORMAL',
       purchased_at_ms: Date.now(),

@@ -10,7 +10,8 @@
 // 500 solo ante errores de base de datos (RevenueCat reintentará).
 import { adminClient, json, safeEqual } from '../_shared/common.ts';
 
-const PRODUCT_ID = 'refloresta';
+// `refloresta_unico` es el producto de compra única; `refloresta` era el antiguo (suscripción, archivado).
+const PRODUCT_IDS = ['refloresta_unico', 'refloresta'];
 const ENTITLEMENT_ID = 'refloresta';
 
 // Tipos de evento (verificados con la documentación de RevenueCat):
@@ -36,7 +37,7 @@ interface RCEvent {
 }
 
 function isRefloresta(ev: RCEvent): boolean {
-  if (ev.product_id === PRODUCT_ID) return true;
+  if (ev.product_id && PRODUCT_IDS.includes(ev.product_id)) return true;
   if (ev.entitlement_id === ENTITLEMENT_ID) return true;
   return Array.isArray(ev.entitlement_ids) && ev.entitlement_ids.includes(ENTITLEMENT_ID);
 }

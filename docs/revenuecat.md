@@ -18,6 +18,9 @@ Todo se hace en **modo test / sandbox**.
 2. *Entitlements* → nuevo entitlement con identificador **`refloresta`** y el producto anterior asociado.
 3. *Offerings* → offering `default` (márcala como *current*) con un package (p. ej. `$rc_lifetime`) que contenga el producto.
 
+
+> **Nota (14/11/2026):** en el proyecto real el producto de compra única tiene el identificador **`refloresta_unico`** (el `refloresta` original se creó por error como suscripción mensual y está archivado). El entitlement y la offering siguen siendo `refloresta` y `default`. El webhook acepta ambos identificadores.
+
 ## 3. Web Purchase Link
 1. En la offering `default`, ve a *Web* → **Create Web Purchase Link**.
 2. Copia la URL base `https://pay.rev.cat/<token>` en `EXPO_PUBLIC_RC_WEB_PURCHASE_LINK`. Para pruebas, usa la URL de **sandbox** que muestra el dashboard (no se comparte con clientes).

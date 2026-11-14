@@ -14,7 +14,8 @@ import { env } from '@/config/env';
 import { useUser } from '@/store/user';
 
 export const ENTITLEMENT_ID = 'refloresta';
-export const PRODUCT_ID = 'refloresta';
+/** store_identifier del producto de compra única en RevenueCat (el entitlement sigue siendo `refloresta`). */
+export const PRODUCT_ID = 'refloresta_unico';
 export const RETURN_PATH = 'refloresta/procesando';
 
 /** Deep link de vuelta. Debe coincidir con la "custom success page" del Web Purchase Link. */

@@ -8,8 +8,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ArbolAnimado } from '@/components/ArbolAnimado';
 import { env } from '@/config/env';
-import { hasRefloresta } from '@/lib/revenuecat';
-import { devMarkOrderPaid } from '@/lib/supabase';
+import { devMarkOrderPaid, isOrderPaid } from '@/lib/supabase';
 import { usePets } from '@/store/pets';
 import { useUser } from '@/store/user';
 import { colors, fonts, radius, spacing, type } from '@/theme';
@@ -70,14 +69,22 @@ export default function ProcesandoScreen() {
       let lastFailed = false;
       while (!cancelled.current) {
         try {
-          const ok = await hasRefloresta({ invalidateCache: true });
+          // Confirmación POR MASCOTA: el pedido de esta mascota marcado como pagado por el webhook.
+          // (El entitlement de RevenueCat es por usuario y no distingue mascotas.)
+          const orderId = petId ? usePets.getState().getRefloresta(petId).orderId : undefined;
+          const appUserId = useUser.getState().appUserId;
+          let ok = false;
+          if (env.devFakePurchase) {
+            // Simula el webhook en el backend mock. Con backend real lo marca el webhook.
+            if (orderId) await devMarkOrderPaid(orderId);
+            ok = true;
+          } else if (orderId && appUserId) {
+            ok = await isOrderPaid(appUserId, orderId);
+          }
           lastFailed = false;
           if (ok) {
             if (cancelled.current) return;
             if (petId) {
-              // Solo en DEV_FAKE_PURCHASE + backend mock: simula el webhook. Con backend real lo marca el webhook.
-              const orderId = usePets.getState().getRefloresta(petId).orderId;
-              if (env.devFakePurchase && orderId) await devMarkOrderPaid(orderId);
               usePets.getState().updateRefloresta(petId, { guardian: true });
               router.replace({ pathname: '/refloresta/gracias', params: { petId } });
             } else {
@@ -87,7 +94,7 @@ export default function ProcesandoScreen() {
           }
         } catch (e) {
           lastFailed = true;
-          console.warn('[procesando] Error comprobando el entitlement', e);
+          console.warn('[procesando] Error comprobando el pago', e);
         }
         if (Date.now() + POLL_INTERVAL_MS > deadline) break;
         await sleep(POLL_INTERVAL_MS);

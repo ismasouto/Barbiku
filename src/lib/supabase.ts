@@ -140,6 +140,15 @@ export async function getPetOrder(appUserId: string, petLocalId: string): Promis
   return orders.find((o) => o.pet_local_id === petLocalId && o.status === 'paid') ?? null;
 }
 
+/**
+ * true si ESE pedido ya está pagado (lo marca el webhook de RevenueCat).
+ * Es la confirmación de compra por mascota: el entitlement de RevenueCat es por usuario.
+ */
+export async function isOrderPaid(appUserId: string, orderId: string): Promise<boolean> {
+  const orders = await getMyOrders(appUserId);
+  return orders.some((o) => o.id === orderId && o.status === 'paid');
+}
+
 /** Contador de prueba social: SOCIAL_PROOF_BASE + public_stats.trees_funded. */
 export async function getTreesFunded(): Promise<number> {
   if (usingMockBackend) {

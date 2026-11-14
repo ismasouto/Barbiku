@@ -19,7 +19,7 @@ Todo se hace en **modo test / sandbox**.
 3. *Offerings* → offering `default` (márcala como *current*) con un package (p. ej. `$rc_lifetime`) que contenga el producto.
 
 
-> **Nota (14/11/2026):** en el proyecto real el producto de compra única tiene el identificador **`refloresta_unico`** (el `refloresta` original se creó por error como suscripción mensual y está archivado). El entitlement y la offering siguen siendo `refloresta` y `default`. El webhook acepta ambos identificadores.
+> **Nota (14/11/2026):** el producto real es **`refloresta_mascota`**, **consumible** de 20,56 EUR, para permitir **una compra por mascota** con el mismo usuario. Los anteriores (`refloresta`, suscripción, y `refloresta_unico`, no consumible) están archivados. Como el entitlement de RevenueCat es por usuario, la app **no** lo usa para confirmar el pago: manda el pedido en `metadata[order_id]` del Web Purchase Link, el webhook marca ese pedido como `paid` y la pantalla `procesando` y la ficha leen ese estado en Supabase.
 
 ## 3. Web Purchase Link
 1. En la offering `default`, ve a *Web* → **Create Web Purchase Link**.

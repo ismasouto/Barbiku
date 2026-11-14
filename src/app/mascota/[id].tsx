@@ -14,8 +14,7 @@ import {
 } from '@/components/seguro/ui';
 import { env } from '@/config/env';
 import { PLANS } from '@/data/mock';
-import { hasRefloresta } from '@/lib/revenuecat';
-import { getPetOrder } from '@/lib/supabase';
+import { getPetOrder, usingMockBackend } from '@/lib/supabase';
 import { usePets } from '@/store/pets';
 import { useUser } from '@/store/user';
 import { colors, fonts, radius, spacing, type } from '@/theme';
@@ -47,15 +46,15 @@ export default function MascotaScreen() {
       let active = true;
       setLoadingChapa(true);
       (appUserId ? getPetOrder(appUserId, id) : Promise.resolve(null))
-        .then((order) => active && setChapa(order?.chapa_status ?? 'recibido'))
+        .then((order) => {
+          if (!active) return;
+          setChapa(order?.chapa_status ?? 'recibido');
+          // Con backend real, sin pedido pagado (p. ej. reembolsado, §12) se oculta la insignia.
+          // El pago es por mascota, así que se mira el pedido y no el entitlement (que es por usuario).
+          if (!usingMockBackend && !env.devFakePurchase) setEntitlementActive(order !== null);
+        })
         .catch(() => active && setChapa('recibido'))
         .finally(() => active && setLoadingChapa(false));
-      // Solo con RevenueCat real: si el entitlement deja de estar activo (reembolso, §12) se oculta la insignia.
-      if (env.revenueCatApiKey && !env.devFakePurchase) {
-        hasRefloresta()
-          .then((ok) => active && setEntitlementActive(ok))
-          .catch(() => {});
-      }
       return () => {
         active = false;
       };

@@ -14,8 +14,8 @@ import { env } from '@/config/env';
 import { useUser } from '@/store/user';
 
 export const ENTITLEMENT_ID = 'refloresta';
-/** store_identifier del producto de compra única en RevenueCat (el entitlement sigue siendo `refloresta`). */
-export const PRODUCT_ID = 'refloresta_unico';
+/** store_identifier del producto consumible (una compra por mascota) en RevenueCat. */
+export const PRODUCT_ID = 'refloresta_mascota';
 export const RETURN_PATH = 'refloresta/procesando';
 
 /** Deep link de vuelta. Debe coincidir con la "custom success page" del Web Purchase Link. */
@@ -116,13 +116,19 @@ export async function hasRefloresta(opts?: { invalidateCache?: boolean }): Promi
   return info.entitlements.active[ENTITLEMENT_ID] !== undefined;
 }
 
-/** URL del Web Purchase Link con el appUserId (formato oficial: https://pay.rev.cat/<token>/<appUserId>). */
-export function buildPurchaseUrl(appUserId: string): string {
+/**
+ * URL del Web Purchase Link con el appUserId (formato oficial: https://pay.rev.cat/<token>/<appUserId>).
+ * `orderId` viaja como metadata[order_id] para que el webhook marque como pagado ese pedido exacto.
+ */
+export function buildPurchaseUrl(appUserId: string, orderId?: string): string {
   const base = env.rcWebPurchaseLink.replace(/\/+$/, '');
-  const url = `${base}/${encodeURIComponent(appUserId)}`;
+  const params: string[] = [];
   // Prerrellena el email en el checkout (parámetro oficial `email`).
   const email = useUser.getState().profile.email?.trim();
-  return email ? `${url}?email=${encodeURIComponent(email)}` : url;
+  if (email) params.push(`email=${encodeURIComponent(email)}`);
+  if (orderId) params.push(`${encodeURIComponent('metadata[order_id]')}=${encodeURIComponent(orderId)}`);
+  const url = `${base}/${encodeURIComponent(appUserId)}`;
+  return params.length ? `${url}?${params.join('&')}` : url;
 }
 
 /**
@@ -133,13 +139,13 @@ export function buildPurchaseUrl(appUserId: string): string {
  * configurada en el dashboard. Aquí solo se usa para que la sesión de navegador se cierre
  * sola al detectarla.
  */
-export async function openPurchaseLink(appUserId: string): Promise<void> {
+export async function openPurchaseLink(appUserId: string, orderId?: string): Promise<void> {
   if (env.devFakePurchase) {
     await new Promise((r) => setTimeout(r, FAKE_DELAY_MS));
     return;
   }
   if (!env.rcWebPurchaseLink) throw new Error('Falta EXPO_PUBLIC_RC_WEB_PURCHASE_LINK.');
-  const url = buildPurchaseUrl(appUserId);
+  const url = buildPurchaseUrl(appUserId, orderId);
 
   if (Platform.OS === 'web') {
     // En web se abre en otra pestaña; procesando hará el polling mientras tanto.

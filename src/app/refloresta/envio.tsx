@@ -105,7 +105,7 @@ export default function EnvioScreen() {
     usePets.getState().updateRefloresta(petId, { orderId, engravingText: engravingResult.value });
 
     try {
-      await openPurchaseLink(appUserId);
+      await openPurchaseLink(appUserId, orderId);
     } catch {
       setSubmitting(false);
       setSubmitError('No hemos podido abrir la página de pago. Inténtalo de nuevo en un momento.');

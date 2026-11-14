@@ -10,8 +10,9 @@
 // 500 solo ante errores de base de datos (RevenueCat reintentará).
 import { adminClient, json, safeEqual } from '../_shared/common.ts';
 
-// `refloresta_unico` es el producto de compra única; `refloresta` era el antiguo (suscripción, archivado).
-const PRODUCT_IDS = ['refloresta_unico', 'refloresta'];
+// `refloresta_mascota`: consumible (una compra por mascota). `refloresta_unico` y `refloresta`
+// son productos anteriores ya archivados; se aceptan por si llegan eventos atrasados.
+const PRODUCT_IDS = ['refloresta_mascota', 'refloresta_unico', 'refloresta'];
 const ENTITLEMENT_ID = 'refloresta';
 
 // Tipos de evento (verificados con la documentación de RevenueCat):
@@ -34,6 +35,13 @@ interface RCEvent {
   transaction_id?: string | null;
   original_transaction_id?: string | null;
   cancel_reason?: string | null;
+  /** metadata[...] del Web Purchase Link. La app manda metadata[order_id]. */
+  metadata?: Record<string, unknown> | null;
+}
+
+function metadataOrderId(ev: RCEvent): string | null {
+  const v = ev.metadata?.order_id;
+  return typeof v === 'string' && /^[0-9a-f-]{36}$/i.test(v) ? v : null;
 }
 
 function isRefloresta(ev: RCEvent): boolean {
@@ -103,11 +111,16 @@ Deno.serve(async (req) => {
       if (already) return json({ ok: true, already_paid: already.id });
     }
 
-    const { data: order, error } = await db
+    // Preferimos el pedido exacto que la app mandó en metadata[order_id] (una compra por mascota);
+    // si no viene, el pendiente más reciente de ese usuario.
+    const metaId = metadataOrderId(ev);
+    let query = db
       .from('refloresta_orders')
       .select('id')
       .in('app_user_id', ids)
-      .eq('status', 'pending_payment')
+      .eq('status', 'pending_payment');
+    if (metaId) query = query.eq('id', metaId);
+    const { data: order, error } = await query
       .order('created_at', { ascending: false })
       .limit(1)
       .maybeSingle();

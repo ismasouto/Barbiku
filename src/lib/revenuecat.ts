@@ -31,11 +31,16 @@ function isExpoGo(): boolean {
   return Boolean((globalThis as { expo?: { modules?: { ExpoGo?: unknown } } }).expo?.modules?.ExpoGo);
 }
 
+/** react-native-purchases usa purchases-js (Browser Mode) en web y Expo Go. */
+function isBrowserMode(): boolean {
+  return Platform.OS === 'web' || isExpoGo();
+}
+
 type Mode = 'sdk' | 'rest';
 
 /** Qué vía usar para leer el entitlement y con qué clave. */
 function resolveMode(): { mode: Mode; apiKey: string } {
-  if (Platform.OS === 'web' || isExpoGo()) return { mode: 'sdk', apiKey: env.revenueCatApiKey };
+  if (isBrowserMode()) return { mode: 'sdk', apiKey: env.revenueCatApiKey };
   const native = Platform.OS === 'ios' ? nativeKeys.ios : nativeKeys.android;
   if (native) return { mode: 'sdk', apiKey: native };
   return { mode: 'rest', apiKey: env.revenueCatApiKey };
@@ -97,11 +102,14 @@ export async function hasRefloresta(opts?: { invalidateCache?: boolean }): Promi
   if (!apiKey) return false;
   if (mode === 'rest') return hasEntitlementViaRest(appUserId, apiKey);
 
-  if (opts?.invalidateCache) {
+  // En web/Expo Go (Browser Mode) invalidateCustomerInfoCache no existe y el SDK la llama sin
+  // esperar su promesa, así que el error se escapa del try/catch ("Uncaught (in promise)").
+  // Ahí no hace falta: getCustomerInfo ya consulta al servidor.
+  if (opts?.invalidateCache && !isBrowserMode()) {
     try {
       await Purchases.invalidateCustomerInfoCache();
     } catch {
-      // En web/Expo Go (purchases-js) no está soportado; getCustomerInfo ya consulta el servidor.
+      // Ignorado: la consulta siguiente devuelve el estado del servidor igualmente.
     }
   }
   const info = await Purchases.getCustomerInfo();

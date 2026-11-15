@@ -1,9 +1,11 @@
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { ReminderBanner } from '@/components/seguro/ReminderBanner';
 import { Button, Card, GuardianBadge, ageLabel, planName, speciesEmoji } from '@/components/seguro/ui';
+import { syncGuardians } from '@/lib/guardians';
 import { usePets } from '@/store/pets';
 import { useUser } from '@/store/user';
 import { colors, fonts, radius, spacing, type } from '@/theme';
@@ -15,6 +17,14 @@ export default function HomeScreen() {
   // Suscripción a `refloresta` para re-renderizar cuando cambian banner/insignia.
   const refloresta = usePets((s) => s.refloresta);
   const shouldShowReminder = usePets((s) => s.shouldShowReminder);
+  const appUserId = useUser((s) => s.appUserId);
+
+  // La insignia se contrasta con los pedidos pagados del servidor cada vez que se vuelve a Inicio.
+  useFocusEffect(
+    useCallback(() => {
+      void syncGuardians(appUserId);
+    }, [appUserId]),
+  );
 
   const reminderPets = pets.filter((p) => shouldShowReminder(p.id));
 

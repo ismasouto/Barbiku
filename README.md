@@ -81,6 +81,27 @@ sequenceDiagram
     DB-->>App: paid → pantalla de gracias + insignia
 ```
 
+## 🔐 Panel interno
+
+Se abre con **5 toques en el logo** de la pantalla de login y un código de acceso. El código lo valida la Edge Function `admin-orders`: la app nunca usa la *service role key*.
+
+| Pestaña | Para quién | Qué muestra | Acciones |
+|---|---|---|---|
+| **Chapas** | Equipo Barbiku | Nombre a grabar, dirección de envío y estado de la chapa | Pasar a **Grabando** y a **Enviado**. El cliente lo ve en la ficha de su mascota |
+| **Árboles** | Refloresta | **Solo** el nombre de la placa, la especie, la provincia y la fecha. Sin email ni dirección completa | **Marcar plantado**, de uso interno: nunca llega a la app del cliente |
+
+Arriba se ven los totales: árboles financiados y euros para Refloresta (pagados × 20 €).
+
+## ✅ Estado del MVP
+
+- [x] Guion de la demo completo de principio a fin con Stripe en modo test, probado en iPhone con Expo Go.
+- [x] El webhook pasa el pedido de `pending_payment` a `paid` y es idempotente por el `id` del evento.
+- [x] Una compra por mascota. La insignia "Guardiana del Bosque" se contrasta siempre con el pedido pagado en el servidor.
+- [x] Ninguna pantalla ni respuesta de la API para el cliente revela el estado del árbol.
+- [x] 20,56 € en la app y en RevenueCat, que dejan 20 € netos según [`pricing.ts`](src/config/pricing.ts).
+- [x] "Ahora no" siempre visible, sin urgencia falsa. Banner de recuerdo durante 7 días.
+- [x] `tsc --noEmit`, ESLint y los tests pasan sin errores.
+
 ## 🛠️ Stack
 
 | Capa | Tecnología |
@@ -151,7 +172,17 @@ src/components/   Chapa, árbol animado, CTA, confeti, tarjeta para compartir (+
 src/lib/          revenuecat.ts · supabase.ts (con mock) · engraving.ts
 src/store/        Zustand + AsyncStorage
 supabase/         Migración SQL y Edge Functions (webhook y panel admin)
-docs/             Contratos, guías de configuración y capturas
+docs/             Contratos, guías de configuración, notas del reto y capturas
 ```
+
+## 📚 Documentación
+
+| Documento | Contenido |
+|---|---|
+| [`CLAUDE.md`](CLAUDE.md) | Especificación completa del producto: flujo, pantallas, datos y requisitos innegociables |
+| [`docs/CONTRATOS.md`](docs/CONTRATOS.md) | Tipos, rutas y API compartidos entre módulos |
+| [`docs/backend.md`](docs/backend.md) | Supabase: migración, RLS, Edge Functions, secrets y pruebas del webhook |
+| [`docs/revenuecat.md`](docs/revenuecat.md) | RevenueCat Web Billing + Stripe: producto, offering, Web Purchase Link y webhook |
+| [`docs/notas/`](docs/notas) | Idea original y planteamiento del reto |
 
 > `SOCIAL_PROOF_BASE = 1240` es una cifra base **ficticia** para el contador de la oferta. El número mostrado es esa base más los pedidos pagados reales.

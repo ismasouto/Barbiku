@@ -33,7 +33,7 @@ interface PetsState extends ReturnType<typeof initialState> {
   dismissOffer: (petId: string) => void;
   /** X del banner de recuerdo. */
   closeBanner: (petId: string) => void;
-  /** Banner visible: dijo "Ahora no" hace < 7 días, no lo cerró y no es guardiana. */
+  /** Banner visible: sin árbol, no lo cerró y han pasado < 7 días desde "Ahora no" (o desde el alta). */
   shouldShowReminder: (petId: string) => boolean;
   reset: () => void;
 }
@@ -68,8 +68,12 @@ export const usePets = create<PetsState>()(
       closeBanner: (petId) => get().updateRefloresta(petId, { bannerClosed: true }),
       shouldShowReminder: (petId) => {
         const r = get().getRefloresta(petId);
-        if (r.guardian || r.bannerClosed || !r.offerDismissedAt) return false;
-        return Date.now() - new Date(r.offerDismissedAt).getTime() < REMINDER_DAYS * DAY;
+        if (r.guardian || r.bannerClosed) return false;
+        // Desde "Ahora no" o, si la oferta se cerró de otra forma (deslizando, volviendo del pago
+        // sin pagar…), desde el alta de la mascota.
+        const since = r.offerDismissedAt ?? get().getPet(petId)?.createdAt;
+        if (!since) return false;
+        return Date.now() - new Date(since).getTime() < REMINDER_DAYS * DAY;
       },
       reset: () => set(initialState()),
     }),

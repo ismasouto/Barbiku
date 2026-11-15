@@ -51,7 +51,12 @@ export default function MascotaScreen() {
           setChapa(order?.chapa_status ?? 'recibido');
           // Con backend real, sin pedido pagado (p. ej. reembolsado, §12) se oculta la insignia.
           // El pago es por mascota, así que se mira el pedido y no el entitlement (que es por usuario).
-          if (!usingMockBackend && !env.devFakePurchase) setEntitlementActive(order !== null);
+          if (!usingMockBackend && !env.devFakePurchase) {
+            setEntitlementActive(order !== null);
+            // Sin pedido pagado se quita también el flag local: así Inicio deja de mostrar la
+            // insignia y la mascota puede volver a plantar su árbol.
+            if (order === null) usePets.getState().updateRefloresta(id, { guardian: false });
+          }
         })
         .catch(() => active && setChapa('recibido'))
         .finally(() => active && setLoadingChapa(false));
